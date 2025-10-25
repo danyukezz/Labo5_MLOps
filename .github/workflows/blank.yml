@@ -1,0 +1,32 @@
+name: Docker build and run
+
+on:
+  workflow_dispatch:
+
+jobs:
+  first-pipeline:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out code repository
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          docker build -t hello-world-nginx:v1 .
+
+      - name: Run container (detached, map port 8080)
+        run: |
+          docker run -d -p 8080:80 --name hello-nginx hello-world-nginx:v1
+
+      - name: Wait for container and smoke test
+        run: |
+          # Wait a bit for nginx to start
+          sleep 3
+          # Try to fetch the page (fails the job if non-2xx/3xx)
+          curl --fail --location --max-time 10 http://localhost:8080
+
+      - name: Cleanup container
+        if: always()
+        run: |
+          docker stop hello-nginx || true
+          docker rm hello-nginx || true
