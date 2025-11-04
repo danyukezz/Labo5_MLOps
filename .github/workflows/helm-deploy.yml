@@ -1,0 +1,73 @@
+name: Helm Deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  helm-deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Check out code repository
+        uses: actions/checkout@v4
+
+      - name: Verify Helm installation
+        run: |
+          helm version
+          kubectl cluster-info
+
+      - name: Update Helm chart values (optional - using yq)
+        run: |
+          # Example: Update image tag dynamically
+          # You can install yq if needed: brew install yq
+          echo "Current image tag: $(grep 'tag:' helm-chart/hello-world/values.yaml)"
+          # Uncomment to change tag dynamically:
+          # yq eval '.image.tag = "v2.0"' -i helm-chart/hello-world/values.yaml
+
+      - name: Helm upgrade/install with custom values
+        run: |
+          helm upgrade --install hello-world-app ./helm-chart/hello-world \
+            --namespace default \
+            --create-namespace \
+            --set image.tag=latest \
+            --set replicaCount=3 \
+            --set image.repository=rancher/hello-world \
+            --set service.nodePort=30080 \
+            --wait \
+            --timeout 5m \
+            --atomic
+
+      - name: Verify Helm release
+        run: |
+          echo "=== Helm Releases ==="
+          helm list -n default
+          echo ""
+          echo "=== Helm Release Status ==="
+          helm status hello-world-app -n default
+
+      - name: Check deployed resources
+        run: |
+          echo "=== Deployments ==="
+          kubectl get deployments -n default -l app=hello-world
+          echo ""
+          echo "=== Pods ==="
+          kubectl get pods -n default -l app=hello-world
+          echo ""
+          echo "=== Services ==="
+          kubectl get services -n default -l app=hello-world
+          echo ""
+          echo "=== Service Details ==="
+          kubectl describe service hello-world-service -n default
+
+      - name: Show application URL
+        run: |
+          echo "=========================================="
+          echo "Application deployed successfully!"
+          echo "Access at: http://localhost:30080"
+          echo "=========================================="
+
+      - name: Helm values used
+        run: |
+          echo "=== Values used in deployment ==="
+          helm get values hello-world-app -n default

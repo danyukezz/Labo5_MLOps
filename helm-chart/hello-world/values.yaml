@@ -1,0 +1,18 @@
+# Default values for hello-world chart
+replicaCount: 3
+
+image:
+  repository: rancher/hello-world
+  tag: latest
+  pullPolicy: Always
+
+service:
+  type: NodePort
+  port: 80
+  nodePort: 30080
+
+namespace: default
+
+labels:
+  app: hello-world
+  version: v1
