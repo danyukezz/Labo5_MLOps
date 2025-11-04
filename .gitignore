@@ -1,0 +1,15 @@
+# GitHub Actions runner
+actions-runner/
+
+# PDF files
+*.pdf
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
