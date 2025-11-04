@@ -5,10 +5,7 @@ on:
 
 jobs:
   first-pipeline:
-    runs-on: self-hosted
-    defaults:
-      run:
-        shell: zsh {0}
+    runs-on: ubuntu-latest
     steps:
       - name: Check out code repository
         uses: actions/checkout@v4
