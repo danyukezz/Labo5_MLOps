@@ -1,0 +1,103 @@
+name: Kubectl Deployment
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy-app:
+    runs-on: self-hosted
+    steps:
+      - name: Check out code repository
+        uses: actions/checkout@v4
+
+      - name: Create Kubernetes Deployment manifest
+        run: |
+          cat > deployment.yaml <<EOF
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: hello-world-deployment
+            namespace: default
+            labels:
+              app: hello-world
+          spec:
+            replicas: 3
+            selector:
+              matchLabels:
+                app: hello-world
+            template:
+              metadata:
+                labels:
+                  app: hello-world
+              spec:
+                containers:
+                - name: hello-world
+                  image: rancher/hello-world:latest
+                  imagePullPolicy: Always
+                  ports:
+                  - containerPort: 80
+          EOF
+          cat deployment.yaml
+
+      - name: Create Kubernetes Service manifest
+        run: |
+          cat > service.yaml <<EOF
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: hello-world-service
+            namespace: default
+          spec:
+            type: NodePort
+            selector:
+              app: hello-world
+            ports:
+            - protocol: TCP
+              port: 80
+              targetPort: 80
+              nodePort: 30080
+          EOF
+          cat service.yaml
+
+      - name: Apply Kubernetes Deployment
+        run: |
+          kubectl apply -f deployment.yaml
+
+      - name: Apply Kubernetes Service
+        run: |
+          kubectl apply -f service.yaml
+
+      - name: Wait for deployment to be ready
+        run: |
+          kubectl rollout status deployment/hello-world-deployment -n default --timeout=120s
+
+      - name: Restart deployment (rollout with same image)
+        run: |
+          kubectl rollout restart deployment/hello-world-deployment -n default
+
+      - name: Wait for rollout to complete
+        run: |
+          kubectl rollout status deployment/hello-world-deployment -n default --timeout=120s
+
+      - name: Check deployment status
+        run: |
+          echo "=== Deployment Status ==="
+          kubectl get deployment hello-world-deployment -n default
+          echo ""
+          echo "=== Pods ==="
+          kubectl get pods -n default -l app=hello-world
+          echo ""
+          echo "=== Service ==="
+          kubectl get service hello-world-service -n default
+          echo ""
+          echo "=== Service Details ==="
+          kubectl describe service hello-world-service -n default
+
+      - name: Show application URL
+        run: |
+          echo "=========================================="
+          echo "Application is available at:"
+          echo "http://localhost:30080"
+          echo "=========================================="
