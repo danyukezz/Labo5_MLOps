@@ -3,8 +3,6 @@ name: Azure ML Workflow
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
   workflow_dispatch:
 
 env:
@@ -17,17 +15,27 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      # Step 1: Checkout code
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Step 2: Azure Login (YOUR CODE GOES HERE)
       - name: Azure Login
         uses: Azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # Step 3: Get Compute Resources
+      # CREATE WORKSPACE FIRST
+      - name: Create Azure ML Workspace
+        uses: Azure/CLI@v2.2.0
+        with:
+          azcliversion: 2.78.0
+          inlineScript: |
+            az extension add --name ml
+            az ml workspace create \
+              -n $WORKSPACE \
+              -g $GROUP \
+              -l $LOCATION
+
+      # THEN LIST COMPUTES
       - name: Azure CLI - Get Compute
         uses: Azure/CLI@v2.2.0
         with:
@@ -37,7 +45,6 @@ jobs:
             az configure --defaults group=$GROUP workspace=$WORKSPACE location=$LOCATION
             az ml compute list
 
-      # Step 4: Logout
       - name: Azure Logout
         run: |
           az logout
