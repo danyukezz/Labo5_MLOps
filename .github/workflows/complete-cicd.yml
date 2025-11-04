@@ -157,33 +157,31 @@ jobs:
       - name: Helm upgrade/install with git-sha tag
         run: |
           echo "=== Deploying with Helm ==="
-          echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.sha.outputs.short }}"
           
-          # Check if image exists in registry
-          echo "Verifying image exists in registry..."
-          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.sha.outputs.short }} || {
-            echo "❌ Failed to pull image from registry"
-            echo "Falling back to 'latest' tag..."
-            IMAGE_TAG="latest"
-          }
+          # For testing: Use public rancher image
+          # TODO: Switch to GHCR image once authentication is fully working
+          IMAGE_REPO="rancher/hello-world"
+          IMAGE_TAG="latest"
           
-          IMAGE_TAG="${IMAGE_TAG:-${{ steps.sha.outputs.short }}}"
+          echo "Using image: $IMAGE_REPO:$IMAGE_TAG"
+          
+          # Uncomment below to use GHCR image:
+          # IMAGE_REPO="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+          # IMAGE_TAG="${{ steps.sha.outputs.short }}"
           
           helm upgrade --install ${{ env.APP_NAME }} ./helm-chart/hello-world \
             --namespace ${{ env.NAMESPACE }} \
             --create-namespace \
-            --set image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }} \
+            --set image.repository=$IMAGE_REPO \
             --set image.tag=$IMAGE_TAG \
             --set image.pullPolicy=Always \
             --set replicaCount=3 \
             --set service.type=NodePort \
             --set service.nodePort=30080 \
-            --set imagePullSecrets[0]=ghcr-secret \
             --wait \
-            --timeout 10m \
+            --timeout 5m \
             --atomic \
-            --cleanup-on-fail \
-            --debug
+            --cleanup-on-fail
         env:
           HELM_EXPERIMENTAL_OCI: 1
 

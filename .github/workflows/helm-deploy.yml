@@ -1,9 +1,10 @@
-name: Helm Deploy
+name: Helm Deploy (DISABLED - Use complete-cicd.yml)
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ "main" ]
+  # Disabled auto-trigger to prevent conflicts with complete-cicd.yml
+  # push:
+  #   branches: [ "main" ]
 
 jobs:
   helm-deploy:
