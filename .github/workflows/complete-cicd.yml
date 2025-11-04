@@ -220,6 +220,16 @@ jobs:
     needs: deploy
     runs-on: self-hosted
     steps:
+      - name: Test service from within cluster
+        run: |
+          echo "=== Testing Service from Within Cluster ==="
+          kubectl run test-curl-${{ github.run_id }} \
+            --image=curlimages/curl:latest \
+            --rm -i --restart=Never \
+            -n ${{ env.NAMESPACE }} \
+            -- curl -s -f http://hello-world-service.${{ env.NAMESPACE }}.svc.cluster.local \
+            && echo "✅ Service is responding from within cluster!"
+
       - name: Test service endpoint
         run: |
           echo "=== Testing Application Endpoint ==="
@@ -228,15 +238,29 @@ jobs:
           SERVICE_PORT=$(kubectl get service hello-world-service -n ${{ env.NAMESPACE }} -o jsonpath='{.spec.ports[0].nodePort}')
           echo "Service exposed on NodePort: $SERVICE_PORT"
           
+          # Note: Docker Desktop for Mac doesn't expose NodePort to localhost
+          # Use port-forward instead
+          echo "Starting port-forward for testing..."
+          kubectl port-forward -n ${{ env.NAMESPACE }} svc/hello-world-service 8080:80 &
+          PF_PID=$!
+          
+          # Wait for port-forward to be ready
+          sleep 3
+          
           # Test HTTP endpoint
-          echo "Testing HTTP endpoint..."
+          echo "Testing HTTP endpoint via port-forward..."
           MAX_RETRIES=10
           RETRY_COUNT=0
           
           while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-            if curl -f -s -o /dev/null http://localhost:$SERVICE_PORT; then
+            if curl -f -s -o /dev/null http://localhost:8080; then
               echo "✅ Application is responding!"
-              curl -s http://localhost:$SERVICE_PORT | head -n 10
+              echo ""
+              echo "=== Application Response ==="
+              curl -s http://localhost:8080 | head -n 20
+              
+              # Clean up port-forward
+              kill $PF_PID 2>/dev/null || true
               exit 0
             else
               echo "⏳ Attempt $((RETRY_COUNT + 1))/$MAX_RETRIES - Waiting for application..."
@@ -244,6 +268,9 @@ jobs:
               RETRY_COUNT=$((RETRY_COUNT + 1))
             fi
           done
+          
+          # Clean up port-forward
+          kill $PF_PID 2>/dev/null || true
           
           echo "❌ Application failed to respond after $MAX_RETRIES attempts"
           exit 1
