@@ -38,6 +38,10 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
+      - name: Pull image from GHCR
+        run: |
+          docker pull ghcr.io/${{ github.repository_owner }}/hello-world-nginx:${{ github.ref_name }}-${{ github.sha }}
+
       - name: Run container (detached, map port 8080)
         run: |
           docker run -d -p 8080:80 --name hello-nginx ghcr.io/${{ github.repository_owner }}/hello-world-nginx:${{ github.ref_name }}-${{ github.sha }}
