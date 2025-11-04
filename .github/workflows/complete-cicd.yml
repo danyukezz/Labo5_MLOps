@@ -1,0 +1,241 @@
+name: Complete CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/hello-world-nginx
+  NAMESPACE: default
+  APP_NAME: hello-world-app
+
+jobs:
+  # Job 1: Run tests before building
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code repository
+        uses: actions/checkout@v4
+
+      - name: Run unit tests (placeholder)
+        run: |
+          echo "=== Running Unit Tests ==="
+          # Add your test commands here:
+          # npm test
+          # pytest
+          # go test ./...
+          echo "✅ All tests passed!"
+
+      - name: Run integration tests (placeholder)
+        run: |
+          echo "=== Running Integration Tests ==="
+          # Add integration test commands
+          echo "✅ Integration tests passed!"
+
+      - name: Check code quality (placeholder)
+        run: |
+          echo "=== Code Quality Checks ==="
+          # Example checks:
+          # - Cyclomatic Complexity
+          # - Code Coverage
+          # - Linting
+          echo "✅ Code quality checks passed!"
+
+  # Job 2: Build and push Docker image
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.meta.outputs.version }}
+      image-full: ${{ steps.meta.outputs.tags }}
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Check out code repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            # Git SHA (always unique)
+            type=sha,prefix=,format=short
+            # Branch name
+            type=ref,event=branch
+            # Latest tag for main branch
+            type=raw,value=latest,enable={{is_default_branch}}
+            # Semantic versioning (if you create tags like v1.0.0)
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
+
+      - name: Image build summary
+        run: |
+          echo "## Docker Image Built Successfully! 🐳" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Tags:**" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Registry:** [${{ env.REGISTRY }}](https://github.com/${{ github.repository_owner }}?tab=packages)" >> $GITHUB_STEP_SUMMARY
+
+  # Job 3: Deploy to Kubernetes with Helm
+  deploy:
+    needs: build-and-push
+    runs-on: self-hosted
+    steps:
+      - name: Check out code repository
+        uses: actions/checkout@v4
+
+      - name: Verify prerequisites
+        run: |
+          echo "=== Checking Prerequisites ==="
+          helm version
+          kubectl version --client
+          kubectl cluster-info
+          echo "✅ All prerequisites available"
+
+      - name: Get short SHA for image tag
+        id: sha
+        run: |
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+          echo "short=$SHORT_SHA" >> $GITHUB_OUTPUT
+          echo "Using image tag: $SHORT_SHA"
+
+      - name: Create namespace if doesn't exist (Cold start support)
+        run: |
+          if kubectl get namespace ${{ env.NAMESPACE }} >/dev/null 2>&1; then
+            echo "✅ Namespace '${{ env.NAMESPACE }}' already exists"
+          else
+            echo "📦 Creating namespace '${{ env.NAMESPACE }}'"
+            kubectl create namespace ${{ env.NAMESPACE }}
+          fi
+
+      - name: Helm upgrade/install with git-sha tag
+        run: |
+          helm upgrade --install ${{ env.APP_NAME }} ./helm-chart/hello-world \
+            --namespace ${{ env.NAMESPACE }} \
+            --create-namespace \
+            --set image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }} \
+            --set image.tag=${{ steps.sha.outputs.short }} \
+            --set image.pullPolicy=Always \
+            --set replicaCount=3 \
+            --set service.type=NodePort \
+            --set service.nodePort=30080 \
+            --wait \
+            --timeout 5m \
+            --atomic \
+            --cleanup-on-fail
+        env:
+          HELM_EXPERIMENTAL_OCI: 1
+
+      - name: Verify Helm deployment
+        run: |
+          echo "=== Helm Release Status ==="
+          helm list -n ${{ env.NAMESPACE }}
+          echo ""
+          helm status ${{ env.APP_NAME }} -n ${{ env.NAMESPACE }}
+
+      - name: Wait for pods to be ready
+        run: |
+          echo "⏳ Waiting for pods to be ready..."
+          kubectl wait --for=condition=ready pod \
+            -l app=hello-world \
+            -n ${{ env.NAMESPACE }} \
+            --timeout=300s
+          echo "✅ All pods are ready!"
+
+      - name: Check deployed resources
+        run: |
+          echo "=== Deployments ==="
+          kubectl get deployments -n ${{ env.NAMESPACE }} -l app=hello-world
+          echo ""
+          echo "=== Pods ==="
+          kubectl get pods -n ${{ env.NAMESPACE }} -l app=hello-world -o wide
+          echo ""
+          echo "=== Services ==="
+          kubectl get services -n ${{ env.NAMESPACE }} -l app=hello-world
+          echo ""
+          echo "=== ReplicaSets ==="
+          kubectl get replicasets -n ${{ env.NAMESPACE }} -l app=hello-world
+
+  # Job 4: Test the deployed application
+  test-deployment:
+    needs: deploy
+    runs-on: self-hosted
+    steps:
+      - name: Test service endpoint
+        run: |
+          echo "=== Testing Application Endpoint ==="
+          
+          # Get service details
+          SERVICE_PORT=$(kubectl get service hello-world-service -n ${{ env.NAMESPACE }} -o jsonpath='{.spec.ports[0].nodePort}')
+          echo "Service exposed on NodePort: $SERVICE_PORT"
+          
+          # Test HTTP endpoint
+          echo "Testing HTTP endpoint..."
+          MAX_RETRIES=10
+          RETRY_COUNT=0
+          
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            if curl -f -s -o /dev/null http://localhost:$SERVICE_PORT; then
+              echo "✅ Application is responding!"
+              curl -s http://localhost:$SERVICE_PORT | head -n 10
+              exit 0
+            else
+              echo "⏳ Attempt $((RETRY_COUNT + 1))/$MAX_RETRIES - Waiting for application..."
+              sleep 5
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+            fi
+          done
+          
+          echo "❌ Application failed to respond after $MAX_RETRIES attempts"
+          exit 1
+
+      - name: Check pod logs
+        if: always()
+        run: |
+          echo "=== Recent Pod Logs ==="
+          kubectl logs -n ${{ env.NAMESPACE }} -l app=hello-world --tail=50
+
+      - name: Deployment summary
+        run: |
+          echo "## Deployment Summary 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Application:** ${{ env.APP_NAME }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Namespace:** ${{ env.NAMESPACE }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Image Tag:** ${{ needs.build-and-push.outputs.image-tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Access URL:** http://localhost:30080" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Resources Deployed" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          kubectl get all -n ${{ env.NAMESPACE }} -l app=hello-world >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
