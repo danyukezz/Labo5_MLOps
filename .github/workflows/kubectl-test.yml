@@ -1,0 +1,59 @@
+name: Kubectl Test
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy-pod:
+    runs-on: self-hosted
+    steps:
+      - name: Check out code repository
+        uses: actions/checkout@v4
+
+      - name: Generate random pod name
+        id: random
+        run: |
+          RANDOM_ID=$(date +%s | sha256sum | base64 | head -c 8 | tr '[:upper:]' '[:lower:]')
+          echo "pod_id=${RANDOM_ID}" >> $GITHUB_OUTPUT
+          echo "Generated Pod ID: ${RANDOM_ID}"
+
+      - name: Create Kubernetes Pod manifest
+        run: |
+          cat > pod.yaml <<EOF
+          apiVersion: v1
+          kind: Pod
+          metadata:
+            name: mypod-${{ steps.random.outputs.pod_id }}
+            namespace: default
+            labels:
+              name: mypod
+          spec:
+            containers:
+            - name: mypod
+              image: rancher/hello-world
+          EOF
+          cat pod.yaml
+
+      - name: Apply Kubernetes Pod
+        run: |
+          kubectl apply -f pod.yaml
+
+      - name: Wait for pod to be ready
+        run: |
+          kubectl wait --for=condition=Ready pod/mypod-${{ steps.random.outputs.pod_id }} -n default --timeout=60s
+
+      - name: Check pods in namespace
+        run: |
+          echo "=== All Pods in default namespace ==="
+          kubectl get pods -n default
+          echo ""
+          echo "=== Details of our pod ==="
+          kubectl describe pod mypod-${{ steps.random.outputs.pod_id }} -n default
+
+      - name: Get pod logs
+        if: always()
+        run: |
+          echo "=== Pod Logs ==="
+          kubectl logs mypod-${{ steps.random.outputs.pod_id }} -n default || echo "No logs yet"
