@@ -106,7 +106,7 @@ jobs:
               echo "Compute is already in state: $STATE. Skipping start."
             fi
 
-      # ENVIRONMENT SETUP (with loop)
+      # ENVIRONMENT SETUP (only if folder exists)
       - name: Azure -- Environment Setup
         uses: Azure/CLI@v2.2.0
         with:
@@ -115,16 +115,24 @@ jobs:
             az extension add --name ml
             az configure --defaults group=$GROUP workspace=$WORKSPACE location=$LOCATION
             
-            # Loop over all environment YAML files
-            for env_file in ./environment/*.yaml; do
-              # Skip compute.yaml as it's not an environment file
-              if [[ "$env_file" != *"compute.yaml"* ]]; then
-                echo "Creating environment from: $env_file"
-                az ml environment create --file "$env_file"
-              fi
-            done
+            # Check if environment folder exists
+            if [ -d "./environment" ]; then
+              # Loop over all environment YAML files
+              for env_file in ./environment/*.yaml; do
+                # Check if file exists (not just glob pattern)
+                if [ -f "$env_file" ]; then
+                  # Skip compute.yaml as it's not an environment file
+                  if [[ "$env_file" != *"compute.yaml"* ]]; then
+                    echo "Creating environment from: $env_file"
+                    az ml environment create --file "$env_file" --continue-on-error || echo "Environment might already exist, continuing..."
+                  fi
+                fi
+              done
+            else
+              echo "No ./environment folder found. Skipping environment setup."
+            fi
 
-      # COMPONENT SETUP (with loop)
+      # COMPONENT SETUP (only if folder exists)
       - name: Azure -- Component Setup
         uses: Azure/CLI@v2.2.0
         with:
@@ -133,11 +141,19 @@ jobs:
             az extension add --name ml
             az configure --defaults group=$GROUP workspace=$WORKSPACE location=$LOCATION
             
-            # Loop over all component YAML files recursively
-            find ./components -name "*.yaml" -type f | while read component_file; do
-              echo "Creating component from: $component_file"
-              az ml component create --file "$component_file"
-            done
+            # Check if components folder exists
+            if [ -d "./components" ]; then
+              # Loop over all component YAML files recursively
+              find ./components -name "*.yaml" -type f 2>/dev/null | while read component_file; do
+                if [ -f "$component_file" ]; then
+                  echo "Creating component from: $component_file"
+                  az ml component create --file "$component_file" || echo "Component might already exist, continuing..."
+                fi
+              done
+            else
+              echo "No ./components folder found. Skipping component setup."
+              echo "Pipeline will use existing components with @latest label."
+            fi
 
       # RUN PIPELINE
       - name: Azure -- Pipeline Run
