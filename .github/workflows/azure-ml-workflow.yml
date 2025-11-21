@@ -74,8 +74,16 @@ jobs:
             if az ml compute show --name compute-danylo 2>/dev/null; then
               echo "Compute 'compute-danylo' already exists. Skipping creation."
             else
-              echo "Compute 'compute-danylo' not found. Creating..."
-              az ml compute create --file ./environment/compute.yaml
+              echo "Compute 'compute-danylo' not found. Creating inline..."
+              
+              # Create compute inline (no local file needed)
+              az ml compute create \
+                --name compute-danylo \
+                --type ComputeInstance \
+                --size Standard_DS2_v2 \
+                --min-instances 1 \
+                --max-instances 1 \
+                --idle-time-before-scale-down 120
             fi
 
       # START COMPUTE (using existing machine)
