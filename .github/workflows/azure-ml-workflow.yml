@@ -31,9 +31,9 @@ on:
           - 'true'
 
 env:
-  GROUP: mlops-test
+  GROUP: rg-azure-ai
   WORKSPACE: bordunov-danylo-ml
-  LOCATION: eastus
+  LOCATION: westeurope
 
 jobs:
   azure-pipeline:
