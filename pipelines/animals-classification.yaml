@@ -1,0 +1,91 @@
+$schema: https://azuremlschemas.azureedge.net/latest/pipeline.schema.json
+
+type: pipeline
+name: animals-classification-cli
+display_name: Animals Classification
+experiment_name: classification
+
+inputs:
+  train_test_split_percentage: 20
+  epochs: 5
+
+outputs:
+  model: 
+    mode: upload
+  registration_details:
+    mode: upload
+
+settings:
+  # default_compute: serverless
+  default_compute: azureml:cli-created-machine
+
+jobs:
+  data_prep_pandas:
+    type: command
+    component: azureml:data_prep_image_resize:2025-10-13-1
+    inputs:
+      data: 
+        type: uri_folder
+        path: azureml:pandas:1
+
+    outputs:
+      output_data: 
+        mode: rw_mount
+
+  data_prep_cats:
+    type: command
+    component: azureml:data_prep_image_resize:2025-10-13-1
+    inputs:
+      data: 
+        type: uri_folder
+        path: azureml:cats:1
+
+    outputs:
+      output_data: 
+        mode: rw_mount
+
+  data_prep_dogs:
+    type: command
+    component: azureml:data_prep_image_resize:2025-10-13-1
+    inputs:
+      data: 
+        type: uri_folder
+        path: azureml:dogs:1
+
+    outputs:
+      output_data: 
+        mode: rw_mount
+
+  data_split:
+    type: command
+    component: azureml:data_split:2025-10-13-1
+    inputs:
+      animal_1: ${{parent.jobs.data_prep_pandas.outputs.output_data}}
+      animal_2: ${{parent.jobs.data_prep_cats.outputs.output_data}}
+      animal_3: ${{parent.jobs.data_prep_dogs.outputs.output_data}}
+      train_test_split_percentage: ${{parent.inputs.train_test_split_percentage}}
+    outputs:
+      testing_data:
+        mode: rw_mount
+      training_data:
+        mode: rw_mount
+
+  training:
+    type: command
+    component: azureml:training:2025-10-13-1
+    inputs:
+      training_folder: ${{parent.jobs.data_split.outputs.training_data}}
+      testing_folder: ${{parent.jobs.data_split.outputs.testing_data}}
+      epochs: ${{parent.inputs.epochs}}
+    outputs:
+      output_folder: ${{parent.outputs.model}}
+
+  register:
+    type: command
+    component: azureml://registries/azureml/components/register_model/versions/0.0.21
+    inputs:
+      model_name: animal-classification
+      model_type: custom_model
+      model_path: ${{parent.jobs.training.outputs.output_folder}}
+    outputs:
+      registration_details_folder: ${{ parent.outputs.registration_details }}

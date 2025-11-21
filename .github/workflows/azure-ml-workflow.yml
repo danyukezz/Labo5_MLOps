@@ -4,14 +4,39 @@ on:
   push:
     branches: [ main ]
   workflow_dispatch:
+    inputs:
+      skip_training:
+        description: 'Skip Azure ML training (download model only)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+      skip_deployment:
+        description: 'Skip Kubernetes deployment'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+      skip_compute_creation:
+        description: 'Skip compute machine creation (use existing)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
 
 env:
   GROUP: mlops-test
-  WORKSPACE: mlops-workspace
+  WORKSPACE: bordunov-danylo-ml
   LOCATION: eastus
 
 jobs:
-  azure-cli-job:
+  azure-pipeline:
     runs-on: ubuntu-latest
     
     steps:
@@ -27,25 +52,205 @@ jobs:
       - name: Create Azure ML Workspace
         uses: Azure/CLI@v2.2.0
         with:
-          azcliversion: 2.78.0
+          azcliversion: 2.79.0
           inlineScript: |
             az extension add --name ml
             az ml workspace create \
               -n $WORKSPACE \
               -g $GROUP \
               -l $LOCATION
+        continue-on-error: true
 
-      # THEN LIST COMPUTES
-      - name: Azure CLI - Get Compute
+      # CREATE COMPUTE
+      - name: Azure -- Create compute
         uses: Azure/CLI@v2.2.0
+        if: ${{ inputs.skip_compute_creation != 'true' }}
         with:
-          azcliversion: 2.78.0
+          azcliversion: 2.79.0
           inlineScript: |
             az extension add --name ml
             az configure --defaults group=$GROUP workspace=$WORKSPACE location=$LOCATION
-            az ml compute list
+            az ml compute create --file ./environment/compute.yaml
+
+      # START COMPUTE 
+      - name: Azure -- Check and Start Compute
+        uses: Azure/CLI@v2.2.0
+        with:
+          azcliversion: 2.79.0
+          inlineScript: |
+            az extension add --name ml -y
+            az configure --defaults group=$GROUP workspace=$WORKSPACE location=$LOCATION
+            
+            # Get compute state
+            STATE=$(az ml compute show --name cli-created-machine --query "state" -o tsv 2>/dev/null || echo "Unknown")
+            
+            # Only start if stopped
+            if [ "$STATE" = "Stopped" ]; then
+              echo "Starting compute..."
+              az ml compute start --name cli-created-machine
+            else
+              echo "Compute is already in state: $STATE. Skipping start."
+            fi
+
+      # ENVIRONMENT SETUP (with loop)
+      - name: Azure -- Environment Setup
+        uses: Azure/CLI@v2.2.0
+        with:
+          azcliversion: 2.79.0
+          inlineScript: |
+            az extension add --name ml
+            az configure --defaults group=$GROUP workspace=$WORKSPACE location=$LOCATION
+            
+            # Loop over all environment YAML files
+            for env_file in ./environment/*.yaml; do
+              # Skip compute.yaml as it's not an environment file
+              if [[ "$env_file" != *"compute.yaml"* ]]; then
+                echo "Creating environment from: $env_file"
+                az ml environment create --file "$env_file"
+              fi
+            done
+
+      # COMPONENT SETUP (with loop)
+      - name: Azure -- Component Setup
+        uses: Azure/CLI@v2.2.0
+        with:
+          azcliversion: 2.79.0
+          inlineScript: |
+            az extension add --name ml
+            az configure --defaults group=$GROUP workspace=$WORKSPACE location=$LOCATION
+            
+            # Loop over all component YAML files recursively
+            find ./components -name "*.yaml" -type f | while read component_file; do
+              echo "Creating component from: $component_file"
+              az ml component create --file "$component_file"
+            done
+
+      # RUN PIPELINE
+      - name: Azure -- Pipeline Run
+        if: ${{ inputs.skip_training != 'true' }}
+        uses: Azure/CLI@v2.2.0
+        with:
+          azcliversion: 2.79.0
+          inlineScript: |
+            az extension add --name ml
+            az configure --defaults group=$GROUP workspace=$WORKSPACE location=$LOCATION
+            # Version tagging: Tag the pipeline with GitHub SHA for traceability
+            az ml job create --file ./pipelines/animals-classification.yaml --stream --set name=animals-classification-${{ github.sha }}-${{ github.run_id }} --set tags.github_sha=${{ github.sha }} --set tags.github_ref=${{ github.ref }}
+
+      # CLEANUP - STOP COMPUTE
+      - name: Azure -- Stop Compute
+        uses: Azure/CLI@v2.2.0
+        with:
+          azcliversion: 2.79.0
+          inlineScript: |
+            az extension add --name ml
+            az configure --defaults group=$GROUP workspace=$WORKSPACE location=$LOCATION
+            az ml compute stop --name cli-created-machine
+        continue-on-error: true
 
       - name: Azure Logout
         run: |
           az logout
         if: always()
+
+  download: 
+    needs: azure-pipeline
+    runs-on: ubuntu-24.04
+    if: ${{ inputs.skip_training != 'true' || github.event_name == 'push' }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      
+      - name: Azure Login
+        uses: Azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Azure -- Download Model
+        uses: Azure/CLI@v2.2.0 
+        with:
+          azcliversion: 2.79.0
+          inlineScript: |
+            az extension add --name ml -y
+            az configure --defaults group=$GROUP workspace=$WORKSPACE location=$LOCATION
+            VERSION=$(az ml model list -n animal-classification --query "[0].version" -o tsv)
+            az ml model download -n animal-classification -v $VERSION --download-path ./artifact-model
+    
+      - name: Docker -- Upload API code from Inference
+        uses: actions/upload-artifact@v4.3.3
+        with:
+          name: docker-config
+          path: inference
+
+  deploy:
+    needs: download
+    runs-on: self-hosted
+    if: ${{ inputs.skip_deployment != 'true' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # DOCKER - Gather Tags
+      - name: Docker -- Gather Tags
+        id: docker-meta-data
+        uses: docker/metadata-action@v5.5.1
+        with:
+          # list of Docker images to use as base name for tags
+          images: |
+            ghcr.io/danyukezz/mlops-animals-api
+          # generate Docker tags based on the following events/attributes:
+          # The GitHub Branch
+          # The GitHub SHA (for complete traceability)
+          # Semantic versioning based on branch/tag
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+
+      # DOCKER - Login to GHCR
+      - name: Docker -- Login to GHCR
+        uses: docker/login-action@v3.2.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # DOCKER - Download API Code for Inference
+      - name: Docker -- Download API Code for Inference
+        uses: actions/download-artifact@v4.1.7
+        with:
+          name: docker-config
+          path: inference
+
+      # DOCKER - Build and Push
+      - name: Docker Build and push
+        id: docker_build
+        uses: docker/build-push-action@v5.3.0
+        with:
+          context: ./inference
+          push: true
+          tags: ${{ steps.docker-meta-data.outputs.tags }}
+
+      # KUBERNETES - Deploy Application
+      - name: Kubernetes -- Deploy to Cluster
+        run: |
+          # Log version information for traceability
+          echo "🚀 Deploying Animals API"
+          echo "📦 GitHub SHA: ${{ github.sha }}"
+          echo "📋 GitHub Ref: ${{ github.ref }}"
+          echo "🔗 Run ID: ${{ github.run_id }}"
+          
+          # Apply Kubernetes manifests
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/service.yaml
+          
+          # Wait for deployment to be ready
+          kubectl rollout status deployment/animals-api --timeout=5m
+          
+          # Display deployment info
+          kubectl get deployments
+          kubectl get services
+          kubectl get pods
+          
+          echo "✅ Deployment complete! Model version tagged with SHA: ${{ github.sha }}"
