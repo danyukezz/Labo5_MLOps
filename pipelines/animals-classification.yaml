@@ -6,7 +6,7 @@ display_name: Animals Classification
 experiment_name: classification
 
 inputs:
-  train_test_split_factor: 0.2
+  train_test_split_factor: 20
   epochs: 5
   batch_size: 32
   learning_rate: 0.001
