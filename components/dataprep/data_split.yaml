@@ -1,0 +1,41 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
+
+name: data_split
+version: 0.1.0
+description: Reads a data asset of images and combines them into a training and testing
+  dataset
+display_name: Data Splitting to Train and Test
+is_deterministic: true
+type: command
+
+code: ./code
+command: 'python traintestsplit.py
+  --datasets ${{inputs.animal_1}} ${{inputs.animal_2}} ${{inputs.animal_3}}
+  --split_size ${{inputs.train_test_split_factor}}
+  --training_data_output ${{outputs.training_data}} --testing_data_output ${{outputs.testing_data}}
+  '
+
+inputs:
+  animal_1:
+    optional: false
+    type: uri_folder
+  animal_2:
+    optional: false
+    type: uri_folder
+  animal_3:
+    optional: false
+    type: uri_folder
+  train_test_split_factor:
+    optional: false
+    type: number
+
+outputs:
+  testing_data:
+    type: uri_folder
+  training_data:
+    type: uri_folder
+
+resources:
+  instance_count: 1
+
+environment: azureml:aml-Pillow:1

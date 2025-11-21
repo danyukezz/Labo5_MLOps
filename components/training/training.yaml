@@ -1,0 +1,63 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
+version: 0.1.0
+type: command
+name: training
+display_name: Training an AI model
+description: Trains an AI model using training and testing data with configurable hyperparameters.
+is_deterministic: false
+
+code: ./code
+environment: azureml:aml-tensorflow:1
+resources:
+  instance_count: 1
+
+command: >
+  python train.py
+  --training_folder ${{inputs.training_folder}}
+  --testing_folder ${{inputs.testing_folder}}
+  --output_model ${{outputs.output_model}}
+  --epochs ${{inputs.epochs}}
+  --batch_size ${{inputs.batch_size}}
+  --learning_rate ${{inputs.learning_rate}}
+  --patience ${{inputs.patience}}
+  --seed ${{inputs.seed}}
+  --model_name ${{inputs.model_name}}
+
+inputs:
+  training_folder:
+    type: uri_folder
+    optional: false
+    description: Folder containing training data
+  testing_folder:
+    type: uri_folder
+    optional: false
+    description: Folder containing testing data
+  epochs:
+    type: number
+    optional: false
+    description: Number of training epochs
+  batch_size:
+    type: number
+    optional: false
+    description: Batch size for training
+  learning_rate:
+    type: number
+    optional: false
+    description: Learning rate for optimizer
+  patience:
+    type: number
+    optional: false
+    description: Early stopping patience
+  seed:
+    type: number
+    optional: false
+    description: Random seed for reproducibility
+  model_name:
+    type: string
+    optional: false
+    description: Name of the model
+
+outputs:
+  output_model:
+    type: uri_folder
+    description: Folder to save trained model and artifacts

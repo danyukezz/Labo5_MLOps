@@ -1,0 +1,16 @@
+$schema: https://azuremlschemas.azureedge.net/latest/computeInstance.schema.json
+name: ci-danylo-dev
+type: computeinstance
+size: STANDARD_DS2_V2
+
+schedules:
+  compute_start_stop:
+    - action: stop
+      state: enabled
+      trigger:
+        type: cron
+        expression: "00 18 * * 1,2,3,4,5"
+        time_zone: UTC
+        start_time: "2025-10-13T11:00:00"
+
+idle_time_before_shutdown: PT30M

@@ -1,0 +1,11 @@
+$schema: https://azuremlschemas.azureedge.net/latest/environment.schema.json
+description: Custom environment for Image Processing
+name: aml-preprocessing-cli
+version: 0.1.0
+
+conda_file: ../components/dataprep/conda.yaml
+image: mcr.microsoft.com/azureml/openmpi5.0-ubuntu24.04:latest
+os_type: linux
+
+tags:
+  Pillow: 11.2.1

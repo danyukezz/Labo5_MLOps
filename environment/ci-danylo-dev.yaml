@@ -1,0 +1,48 @@
+created_on: 2025-10-13T12:44:01.441141+0000
+enable_node_public_ip: true
+enable_os_patching: false
+enable_root_access: true
+enable_sso: true
+id: /subscriptions/c200cbb6-9be7-4ea5-8458-82dde67635de/resourceGroups/rg-azure-ai/providers/Microsoft.MachineLearningServices/workspaces/bordunov-danylo-ml/computes/ci-danylo-dev
+idle_time_before_shutdown: PT30M
+idle_time_before_shutdown_minutes: 30
+last_operation:
+  operation_name: Create
+  operation_status: Succeeded
+  operation_time: '2025-10-13T12:44:10.661Z'
+  operation_trigger: User
+location: westeurope
+name: ci-danylo-dev
+network_settings:
+  private_ip_address: 10.0.0.4
+  public_ip_address: 20.61.81.127
+os_image_metadata:
+  current_image_version: 25.07.12
+  is_latest_os_image_version: true
+  latest_image_version: 25.07.12
+provisioning_state: Succeeded
+release_quota_on_stop: false
+resourceGroup: rg-azure-ai
+schedules:
+  compute_start_stop:
+  - action: stop
+    provisioning_state: Completed
+    schedule_id: a18ea21a-d9f2-437e-8283-14bc57b4a285
+    state: enabled
+    trigger:
+      expression: 00 18 * * 1,2,3,4,5
+      start_time: '2025-10-13T11:00:00'
+      time_zone: UTC
+      type: cron
+services:
+- display_name: Jupyter
+  endpoint_uri: https://ci-danylo-dev.westeurope.instances.azureml.ms/tree/
+- display_name: Jupyter Lab
+  endpoint_uri: https://ci-danylo-dev.westeurope.instances.azureml.ms/lab
+size: STANDARD_DS2_V2
+ssh_public_access_enabled: false
+ssh_settings:
+  admin_username: azureuser
+  ssh_port: '50000'
+state: Running
+type: computeinstance

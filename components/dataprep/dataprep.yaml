@@ -1,0 +1,23 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
+name: data_prep_image_resize
+type: command
+version: 0.1.0
+display_name: Data Preparation - Image Resize
+description: Component to resize images with a Python script
+is_deterministic: true
+
+environment: azureml:aml-Pillow:1
+resources:
+  instance_count: 1
+
+code: ./code
+command: 'python dataprep.py --data ${{inputs.data}} --output_data ${{outputs.output_data}}'
+
+inputs:
+  data:
+    type: uri_folder
+    optional: false
+
+outputs:
+  output_data:
+    type: uri_folder

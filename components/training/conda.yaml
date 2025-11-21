@@ -1,0 +1,15 @@
+name: training-env
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - numpy=2.2.5
+  - pip=25.1
+  - scikit-learn=1.6.1
+  - scipy=1.15.2
+  - pip:
+    - mlflow==2.22.0
+    - azureml-core==1.60.0
+    - azureml-mlflow==1.60.0
+    - pandas==2.2.3
+    - tensorflow==2.19.0
