@@ -124,7 +124,7 @@ jobs:
                   # Skip compute.yaml as it's not an environment file
                   if [[ "$env_file" != *"compute.yaml"* ]]; then
                     echo "Creating environment from: $env_file"
-                    az ml environment create --file "$env_file" --continue-on-error || echo "Environment might already exist, continuing..."
+                    az ml environment create --file "$env_file" || echo "Environment might already exist, continuing..."
                   fi
                 fi
               done
@@ -143,9 +143,10 @@ jobs:
             
             # Check if components folder exists
             if [ -d "./components" ]; then
-              # Loop over all component YAML files recursively
+              # Only register actual component YAML files (not conda.yaml)
               find ./components -name "*.yaml" -type f 2>/dev/null | while read component_file; do
-                if [ -f "$component_file" ]; then
+                # Skip conda.yaml files as they are environment files, not components
+                if [[ "$component_file" != *"conda.yaml"* ]] && [ -f "$component_file" ]; then
                   echo "Creating component from: $component_file"
                   az ml component create --file "$component_file" || echo "Component might already exist, continuing..."
                 fi
