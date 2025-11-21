@@ -26,7 +26,7 @@ jobs:
     inputs:
       data: 
         type: uri_folder
-        path: azureml:pandas:1
+        path: azureml://subscriptions/c200cbb6-9be7-4ea5-8458-82dde67635de/resourcegroups/mlops-test/workspaces/mlops-workspace/data/pandas/versions/1
 
     outputs:
       output_data: 
@@ -38,7 +38,7 @@ jobs:
     inputs:
       data: 
         type: uri_folder
-        path: azureml:cats:1
+        path: azureml://subscriptions/c200cbb6-9be7-4ea5-8458-82dde67635de/resourcegroups/mlops-test/workspaces/mlops-workspace/data/cats/versions/1
 
     outputs:
       output_data: 
@@ -50,7 +50,7 @@ jobs:
     inputs:
       data: 
         type: uri_folder
-        path: azureml:dogs:1
+        path: azureml://subscriptions/c200cbb6-9be7-4ea5-8458-82dde67635de/resourcegroups/mlops-test/workspaces/mlops-workspace/data/dogs/versions/1
 
     outputs:
       output_data: 
