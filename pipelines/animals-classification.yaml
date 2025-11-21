@@ -17,7 +17,7 @@ outputs:
 
 settings:
   # default_compute: serverless
-  default_compute: azureml:cli-created-machine
+  default_compute: azureml:compute-danylo
 
 jobs:
   data_prep_pandas:

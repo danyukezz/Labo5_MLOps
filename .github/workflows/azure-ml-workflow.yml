@@ -61,18 +61,24 @@ jobs:
               -l $LOCATION
         continue-on-error: true
 
-      # CREATE COMPUTE
+      # CREATE COMPUTE (only if doesn't exist)
       - name: Azure -- Create compute
         uses: Azure/CLI@v2.2.0
-        if: ${{ inputs.skip_compute_creation != 'true' }}
         with:
           azcliversion: 2.79.0
           inlineScript: |
             az extension add --name ml
             az configure --defaults group=$GROUP workspace=$WORKSPACE location=$LOCATION
-            az ml compute create --file ./environment/compute.yaml
+            
+            # Check if compute exists
+            if az ml compute show --name compute-danylo 2>/dev/null; then
+              echo "Compute 'compute-danylo' already exists. Skipping creation."
+            else
+              echo "Compute 'compute-danylo' not found. Creating..."
+              az ml compute create --file ./environment/compute.yaml
+            fi
 
-      # START COMPUTE 
+      # START COMPUTE (using existing machine)
       - name: Azure -- Check and Start Compute
         uses: Azure/CLI@v2.2.0
         with:
@@ -82,12 +88,12 @@ jobs:
             az configure --defaults group=$GROUP workspace=$WORKSPACE location=$LOCATION
             
             # Get compute state
-            STATE=$(az ml compute show --name cli-created-machine --query "state" -o tsv 2>/dev/null || echo "Unknown")
+            STATE=$(az ml compute show --name compute-danylo --query "state" -o tsv 2>/dev/null || echo "Unknown")
             
             # Only start if stopped
             if [ "$STATE" = "Stopped" ]; then
               echo "Starting compute..."
-              az ml compute start --name cli-created-machine
+              az ml compute start --name compute-danylo
             else
               echo "Compute is already in state: $STATE. Skipping start."
             fi
@@ -145,7 +151,7 @@ jobs:
           inlineScript: |
             az extension add --name ml
             az configure --defaults group=$GROUP workspace=$WORKSPACE location=$LOCATION
-            az ml compute stop --name cli-created-machine
+            az ml compute stop --name compute-danylo
         continue-on-error: true
 
       - name: Azure Logout
