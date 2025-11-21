@@ -8,6 +8,10 @@ experiment_name: classification
 inputs:
   train_test_split_factor: 0.2
   epochs: 5
+  batch_size: 32
+  learning_rate: 0.001
+  patience: 5
+  seed: 42
 
 outputs:
   model: 
@@ -76,8 +80,13 @@ jobs:
       training_folder: ${{parent.jobs.data_split.outputs.training_data}}
       testing_folder: ${{parent.jobs.data_split.outputs.testing_data}}
       epochs: ${{parent.inputs.epochs}}
+      batch_size: ${{parent.inputs.batch_size}}
+      learning_rate: ${{parent.inputs.learning_rate}}
+      patience: ${{parent.inputs.patience}}
+      seed: ${{parent.inputs.seed}}
+      model_name: animal-classifier
     outputs:
-      output_folder: ${{parent.outputs.model}}
+      output_model: ${{parent.outputs.model}}
 
   register:
     type: command
@@ -85,6 +94,6 @@ jobs:
     inputs:
       model_name: animal-classification
       model_type: custom_model
-      model_path: ${{parent.jobs.training.outputs.output_folder}}
+      model_path: ${{parent.jobs.training.outputs.output_model}}
     outputs:
       registration_details_folder: ${{ parent.outputs.registration_details }}
