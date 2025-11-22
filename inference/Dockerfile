@@ -14,8 +14,9 @@ COPY . .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Ensure model directory exists
-RUN mkdir -p /app/model
+# Copy model to /models/model (app expects it there)
+RUN mkdir -p /models && \
+    if [ -d "/app/model" ]; then cp -r /app/model /models/; fi
 
 # Expose port
 EXPOSE 8000

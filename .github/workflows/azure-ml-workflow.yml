@@ -206,6 +206,12 @@ jobs:
             az configure --defaults group=$GROUP workspace=$WORKSPACE location=$LOCATION
             VERSION=$(az ml model list -n animals-classifier-model --query "[0].version" -o tsv)
             az ml model download -n animals-classifier-model -v $VERSION --download-path ./artifact-model
+      
+      - name: Upload Model Artifact
+        uses: actions/upload-artifact@v4.3.3
+        with:
+          name: trained-model
+          path: artifact-model
     
       - name: Docker -- Upload API code from Inference
         uses: actions/upload-artifact@v4.3.3
@@ -255,6 +261,13 @@ jobs:
         with:
           name: docker-config
           path: inference
+
+      # DOCKER - Download Model
+      - name: Docker -- Download Trained Model
+        uses: actions/download-artifact@v4.1.7
+        with:
+          name: trained-model
+          path: inference/model
 
       # DOCKER - Build and Push
       - name: Docker Build and push
