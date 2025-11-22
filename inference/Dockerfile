@@ -15,8 +15,21 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 # Copy model to /models/model (app expects it there)
+# Azure ML downloads with structure: model/animals-classifier-model/version/model_files
 RUN mkdir -p /models && \
-    if [ -d "/app/model" ]; then cp -r /app/model /models/; fi
+    if [ -d "/app/model" ]; then \
+      # Find the actual model directory (contains saved_model.pb)
+      MODEL_DIR=$(find /app/model -name "saved_model.pb" -exec dirname {} \; | head -1); \
+      if [ -n "$MODEL_DIR" ]; then \
+        echo "Found model at: $MODEL_DIR"; \
+        cp -r "$MODEL_DIR" /models/model; \
+      else \
+        echo "Warning: No saved_model.pb found, copying as-is"; \
+        cp -r /app/model /models/; \
+      fi; \
+    else \
+      echo "Warning: No model directory found at /app/model"; \
+    fi
 
 # Expose port
 EXPOSE 8000
