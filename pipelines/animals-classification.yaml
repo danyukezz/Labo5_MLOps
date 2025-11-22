@@ -1,9 +1,12 @@
-$schema: https://azuremlschemas.azureedge.net/latest/pipeline.schema.json
+$schema: https://azuremlschemas.azureedge.net/latest/pipelineJob.schema.json
 
 type: pipeline
 name: animals-classification-cli
 display_name: Animals Classification
 experiment_name: classification
+
+identity:
+  type: user_identity
 
 inputs:
   train_test_split_factor: 20
@@ -30,7 +33,6 @@ jobs:
       data: 
         type: uri_folder
         path: azureml:pandas:1
-
     outputs:
       output_data: 
         mode: rw_mount
@@ -42,7 +44,6 @@ jobs:
       data: 
         type: uri_folder
         path: azureml:cats:1
-
     outputs:
       output_data: 
         mode: rw_mount
@@ -54,7 +55,6 @@ jobs:
       data: 
         type: uri_folder
         path: azureml:dogs:1
-
     outputs:
       output_data: 
         mode: rw_mount
@@ -91,7 +91,6 @@ jobs:
   register:
     type: command
     component: azureml://registries/azureml/components/register_model/versions/0.0.21
-    identity: UserIdentity
     inputs:
       model_name: animal-classification
       model_type: custom_model
