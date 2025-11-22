@@ -215,8 +215,10 @@ jobs:
 
   deploy:
     needs: download
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     if: ${{ inputs.skip_deployment != 'true' }}
+    env:
+      KUBECONFIG: /Users/danyukezz/.kube/config
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
