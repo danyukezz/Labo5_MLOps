@@ -1,0 +1,159 @@
+AzureMLCredential.get_token failed: Expecting value: line 1 column 1 (char 0)
+ManagedIdentityCredential.get_token failed: Expecting value: line 1 column 1 (char 0)
+_AzureMLOnBehalfOfCredential.get_token succeeded
+_AzureMLOnBehalfOfCredential.get_token succeeded
+_AzureMLOnBehalfOfCredential.get_token succeeded
+_AzureMLOnBehalfOfCredential.get_token succeeded
+_AzureMLOnBehalfOfCredential.get_token succeeded
+2025-11-22 20:31:31,797 [register] parse_args: INFO     Args received Namespace(model_path='/mnt/azureml/cr/j/7adb34da9e2e486cb76115033081eebc/cap/data-capability/wd/INPUT_model_path', model_type='custom_model', model_name='animal-classification', model_description=None, registry_name=None, registration_details_folder=PosixPath('/mnt/azureml/cr/j/7adb34da9e2e486cb76115033081eebc/cap/data-capability/wd/registration_details_folder'), model_download_metadata=None, model_metadata=None, model_version=None) 
+AzureMLCredential.get_token failed: Expecting value: line 1 column 1 (char 0)
+ManagedIdentityCredential.get_token failed: Expecting value: line 1 column 1 (char 0)
+2025-11-22 20:31:31,871 [common_utils] get_mlclient: WARNING  ManagedIdentityCredential was not found in the compute. Falling back to AzureMLOnBehalfOfCredential 
+_AzureMLOnBehalfOfCredential.get_token succeeded
+2025-11-22 20:31:31,892 [common_utils] get_job_uri_from_input_run_assetId: WARNING  Returning None, as /mnt/azureml/cr/j/7adb34da9e2e486cb76115033081eebc/cap/data-capability/wd/INPUT_model_path does not match with input asset ID pattern azureml://locations/.+/workspaces/.+/(.+)/azureml_(.+)_output_(.+)/versions/(.+) 
+2025-11-22 20:31:31,892 [register] main: INFO     job_asset_id None 
+_AzureMLOnBehalfOfCredential.get_token succeeded
+2025-11-22 20:31:32,598 [register] main: INFO     Registering model animal-classification with version 10. 
+_AzureMLOnBehalfOfCredential.get_token succeeded
+[32mUploading INPUT_model_path (37.12 MBs):   0%|          | 0/37116318 [00:00<?, ?it/s][32mUploading INPUT_model_path (37.12 MBs): 100%|██████████| 37116318/37116318 [00:01<00:00, 35526750.89it/s][32mUploading INPUT_model_path (37.12 MBs): 100%|██████████| 37116318/37116318 [00:01<00:00, 35517526.96it/s]
+[39m
+
+2025-11-22 20:31:35,579 [exceptions] wrapper: ERROR    Exception An error occurred: [(UserError) A model with this name and version already exists. If you are trying to create a new model, use a different name. If you are trying to update an existing model, the existing model's asset path cannot be changed. Only description, tags and properties can be updated.
+Code: UserError
+Message: A model with this name and version already exists. If you are trying to create a new model, use a different name. If you are trying to update an existing model, the existing model's asset path cannot be changed. Only description, tags and properties can be updated.
+Target: $.properties.path
+Additional Information:Type: ComponentName
+Info: {
+    "value": "managementfrontend"
+}Type: Correlation
+Info: {
+    "value": {
+        "operation": "8eb590e90a8ba63f404da8e364d62d65",
+        "request": "399317c8218740d4"
+    }
+}Type: Environment
+Info: {
+    "value": "westeurope"
+}Type: Location
+Info: {
+    "value": "westeurope"
+}Type: Time
+Info: {
+    "value": "2025-11-22T20:31:35.5520223+00:00"
+}Type: InnerError
+Info: {
+    "value": {
+        "code": "Immutable",
+        "innerError": {
+            "code": "ModelAssetPathImmutable",
+            "innerError": null
+        }
+    }
+}Type: MessageFormat
+Info: {
+    "value": "A model with this name and version already exists. If you are trying to create a new model, use a different name. If you are trying to update an existing model, the existing model's asset path cannot be changed. Only description, tags and properties can be updated."
+}Type: MessageParameters
+Info: {
+    "value": {}
+}] when calling main 
+Traceback (most recent call last):
+  File "/mnt/azureml/cr/j/7adb34da9e2e486cb76115033081eebc/exe/wd/utils/exceptions.py", line 75, in wrapper
+    return func(*args, **kwargs)
+  File "/mnt/azureml/cr/j/7adb34da9e2e486cb76115033081eebc/exe/wd/register.py", line 200, in main
+    registered_model = ml_client.models.create_or_update(model)
+  File "/azureml-envs/python-sdk-v2/lib/python3.10/site-packages/azure/ai/ml/_telemetry/activity.py", line 288, in wrapper
+    return f(*args, **kwargs)
+  File "/azureml-envs/python-sdk-v2/lib/python3.10/site-packages/azure/ai/ml/operations/_model_operations.py", line 301, in create_or_update
+    raise ex
+  File "/azureml-envs/python-sdk-v2/lib/python3.10/site-packages/azure/ai/ml/operations/_model_operations.py", line 289, in create_or_update
+    raise e
+  File "/azureml-envs/python-sdk-v2/lib/python3.10/site-packages/azure/ai/ml/operations/_model_operations.py", line 268, in create_or_update
+    else self._model_versions_operation.create_or_update(
+  File "/azureml-envs/python-sdk-v2/lib/python3.10/site-packages/azure/core/tracing/decorator.py", line 119, in wrapper_use_tracer
+    return func(*args, **kwargs)
+  File "/azureml-envs/python-sdk-v2/lib/python3.10/site-packages/azure/ai/ml/_restclient/v2023_08_01_preview/operations/_model_versions_operations.py", line 650, in create_or_update
+    raise HttpResponseError(response=response, model=error, error_format=ARMErrorFormat)
+azure.core.exceptions.HttpResponseError: (UserError) A model with this name and version already exists. If you are trying to create a new model, use a different name. If you are trying to update an existing model, the existing model's asset path cannot be changed. Only description, tags and properties can be updated.
+Code: UserError
+Message: A model with this name and version already exists. If you are trying to create a new model, use a different name. If you are trying to update an existing model, the existing model's asset path cannot be changed. Only description, tags and properties can be updated.
+Target: $.properties.path
+Additional Information:Type: ComponentName
+Info: {
+    "value": "managementfrontend"
+}Type: Correlation
+Info: {
+    "value": {
+        "operation": "8eb590e90a8ba63f404da8e364d62d65",
+        "request": "399317c8218740d4"
+    }
+}Type: Environment
+Info: {
+    "value": "westeurope"
+}Type: Location
+Info: {
+    "value": "westeurope"
+}Type: Time
+Info: {
+    "value": "2025-11-22T20:31:35.5520223+00:00"
+}Type: InnerError
+Info: {
+    "value": {
+        "code": "Immutable",
+        "innerError": {
+            "code": "ModelAssetPathImmutable",
+            "innerError": null
+        }
+    }
+}Type: MessageFormat
+Info: {
+    "value": "A model with this name and version already exists. If you are trying to create a new model, use a different name. If you are trying to update an existing model, the existing model's asset path cannot be changed. Only description, tags and properties can be updated."
+}Type: MessageParameters
+Info: {
+    "value": {}
+}
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/mnt/azureml/cr/j/7adb34da9e2e486cb76115033081eebc/exe/wd/register.py", line 225, in <module>
+    main()
+  File "/mnt/azureml/cr/j/7adb34da9e2e486cb76115033081eebc/exe/wd/utils/exceptions.py", line 90, in wrapper
+    raise azureml_exception
+azure.ai.ml.exceptions.MlException: An error occurred: [(UserError) A model with this name and version already exists. If you are trying to create a new model, use a different name. If you are trying to update an existing model, the existing model's asset path cannot be changed. Only description, tags and properties can be updated.
+Code: UserError
+Message: A model with this name and version already exists. If you are trying to create a new model, use a different name. If you are trying to update an existing model, the existing model's asset path cannot be changed. Only description, tags and properties can be updated.
+Target: $.properties.path
+Additional Information:Type: ComponentName
+Info: {
+    "value": "managementfrontend"
+}Type: Correlation
+Info: {
+    "value": {
+        "operation": "8eb590e90a8ba63f404da8e364d62d65",
+        "request": "399317c8218740d4"
+    }
+}Type: Environment
+Info: {
+    "value": "westeurope"
+}Type: Location
+Info: {
+    "value": "westeurope"
+}Type: Time
+Info: {
+    "value": "2025-11-22T20:31:35.5520223+00:00"
+}Type: InnerError
+Info: {
+    "value": {
+        "code": "Immutable",
+        "innerError": {
+            "code": "ModelAssetPathImmutable",
+            "innerError": null
+        }
+    }
+}Type: MessageFormat
+Info: {
+    "value": "A model with this name and version already exists. If you are trying to create a new model, use a different name. If you are trying to update an existing model, the existing model's asset path cannot be changed. Only description, tags and properties can be updated."
+}Type: MessageParameters
+Info: {
+    "value": {}
+}]

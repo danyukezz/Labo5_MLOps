@@ -1,0 +1,65 @@
+AzureMLCredential.get_token failed: Expecting value: line 1 column 1 (char 0)
+ManagedIdentityCredential.get_token failed: Expecting value: line 1 column 1 (char 0)
+_AzureMLOnBehalfOfCredential.get_token succeeded
+_AzureMLOnBehalfOfCredential.get_token succeeded
+_AzureMLOnBehalfOfCredential.get_token succeeded
+_AzureMLOnBehalfOfCredential.get_token succeeded
+_AzureMLOnBehalfOfCredential.get_token succeeded
+2025-11-22 20:02:07,273 [register] parse_args: INFO     Args received Namespace(model_path='/mnt/azureml/cr/j/937a50b2b7134c7594efa04bd346fa18/cap/data-capability/wd/INPUT_model_path', model_type='custom_model', model_name='animal-classification', model_description=None, registry_name=None, registration_details_folder=PosixPath('/mnt/azureml/cr/j/937a50b2b7134c7594efa04bd346fa18/cap/data-capability/wd/registration_details_folder'), model_download_metadata=None, model_metadata=None, model_version=None) 
+AzureMLCredential.get_token failed: Expecting value: line 1 column 1 (char 0)
+ManagedIdentityCredential.get_token failed: Expecting value: line 1 column 1 (char 0)
+2025-11-22 20:02:07,371 [common_utils] get_mlclient: WARNING  ManagedIdentityCredential was not found in the compute. Falling back to AzureMLOnBehalfOfCredential 
+_AzureMLOnBehalfOfCredential.get_token succeeded
+2025-11-22 20:02:07,390 [common_utils] get_job_uri_from_input_run_assetId: WARNING  Returning None, as /mnt/azureml/cr/j/937a50b2b7134c7594efa04bd346fa18/cap/data-capability/wd/INPUT_model_path does not match with input asset ID pattern azureml://locations/.+/workspaces/.+/(.+)/azureml_(.+)_output_(.+)/versions/(.+) 
+2025-11-22 20:02:07,390 [register] main: INFO     job_asset_id None 
+_AzureMLOnBehalfOfCredential.get_token succeeded
+2025-11-22 20:02:08,830 [register] main: INFO     Registering model animal-classification with version 10. 
+_AzureMLOnBehalfOfCredential.get_token succeeded
+[32mUploading INPUT_model_path (37.12 MBs):   0%|          | 0/37116318 [00:00<?, ?it/s][32mUploading INPUT_model_path (37.12 MBs): 100%|██████████| 37116318/37116318 [00:01<00:00, 37023201.77it/s][32mUploading INPUT_model_path (37.12 MBs): 100%|██████████| 37116318/37116318 [00:01<00:00, 37015261.48it/s]
+[39m
+
+2025-11-22 20:02:12,687 [exceptions] wrapper: ERROR    Exception An error occurred: [(UserError) Conflict
+Code: UserError
+Message: Conflict
+Exception Details:	(ModelVersionInUse) Model animal-classification:10 already exists. Please use a different name or version.
+	Code: ModelVersionInUse
+	Message: Model animal-classification:10 already exists. Please use a different name or version.] when calling main 
+Traceback (most recent call last):
+  File "/mnt/azureml/cr/j/937a50b2b7134c7594efa04bd346fa18/exe/wd/utils/exceptions.py", line 75, in wrapper
+    return func(*args, **kwargs)
+  File "/mnt/azureml/cr/j/937a50b2b7134c7594efa04bd346fa18/exe/wd/register.py", line 200, in main
+    registered_model = ml_client.models.create_or_update(model)
+  File "/azureml-envs/python-sdk-v2/lib/python3.10/site-packages/azure/ai/ml/_telemetry/activity.py", line 288, in wrapper
+    return f(*args, **kwargs)
+  File "/azureml-envs/python-sdk-v2/lib/python3.10/site-packages/azure/ai/ml/operations/_model_operations.py", line 301, in create_or_update
+    raise ex
+  File "/azureml-envs/python-sdk-v2/lib/python3.10/site-packages/azure/ai/ml/operations/_model_operations.py", line 289, in create_or_update
+    raise e
+  File "/azureml-envs/python-sdk-v2/lib/python3.10/site-packages/azure/ai/ml/operations/_model_operations.py", line 268, in create_or_update
+    else self._model_versions_operation.create_or_update(
+  File "/azureml-envs/python-sdk-v2/lib/python3.10/site-packages/azure/core/tracing/decorator.py", line 119, in wrapper_use_tracer
+    return func(*args, **kwargs)
+  File "/azureml-envs/python-sdk-v2/lib/python3.10/site-packages/azure/ai/ml/_restclient/v2023_08_01_preview/operations/_model_versions_operations.py", line 648, in create_or_update
+    map_error(status_code=response.status_code, response=response, error_map=error_map)
+  File "/azureml-envs/python-sdk-v2/lib/python3.10/site-packages/azure/core/exceptions.py", line 163, in map_error
+    raise error
+azure.core.exceptions.ResourceExistsError: (UserError) Conflict
+Code: UserError
+Message: Conflict
+Exception Details:	(ModelVersionInUse) Model animal-classification:10 already exists. Please use a different name or version.
+	Code: ModelVersionInUse
+	Message: Model animal-classification:10 already exists. Please use a different name or version.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/mnt/azureml/cr/j/937a50b2b7134c7594efa04bd346fa18/exe/wd/register.py", line 225, in <module>
+    main()
+  File "/mnt/azureml/cr/j/937a50b2b7134c7594efa04bd346fa18/exe/wd/utils/exceptions.py", line 90, in wrapper
+    raise azureml_exception
+azure.ai.ml.exceptions.MlException: An error occurred: [(UserError) Conflict
+Code: UserError
+Message: Conflict
+Exception Details:	(ModelVersionInUse) Model animal-classification:10 already exists. Please use a different name or version.
+	Code: ModelVersionInUse
+	Message: Model animal-classification:10 already exists. Please use a different name or version.]
