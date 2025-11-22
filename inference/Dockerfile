@@ -15,20 +15,24 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 # Copy model to /models/model (app expects it there)
-# Azure ML downloads with structure: model/animals-classifier-model/version/model_files
-RUN mkdir -p /models && \
+# Azure ML downloads with structure: model/animals-classifier-model/INPUT_model_path/*.keras
+RUN mkdir -p /models/model && \
     if [ -d "/app/model" ]; then \
-      # Find the actual model directory (contains saved_model.pb)
-      MODEL_DIR=$(find /app/model -name "saved_model.pb" -exec dirname {} \; | head -1); \
-      if [ -n "$MODEL_DIR" ]; then \
+      # Find the actual model file (.keras or saved_model.pb)
+      MODEL_FILE=$(find /app/model -type f \( -name "*.keras" -o -name "saved_model.pb" \) | head -1); \
+      if [ -n "$MODEL_FILE" ]; then \
+        MODEL_DIR=$(dirname "$MODEL_FILE"); \
         echo "Found model at: $MODEL_DIR"; \
-        cp -r "$MODEL_DIR" /models/model; \
+        cp -r "$MODEL_DIR"/* /models/model/; \
+        echo "Model files copied to /models/model/"; \
+        ls -la /models/model/; \
       else \
-        echo "Warning: No saved_model.pb found, copying as-is"; \
-        cp -r /app/model /models/; \
+        echo "Error: No model file found (.keras or saved_model.pb)"; \
+        exit 1; \
       fi; \
     else \
-      echo "Warning: No model directory found at /app/model"; \
+      echo "Error: No model directory found at /app/model"; \
+      exit 1; \
     fi
 
 # Expose port
