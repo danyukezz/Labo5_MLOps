@@ -91,6 +91,7 @@ jobs:
   register:
     type: command
     component: azureml://registries/azureml/components/register_model/versions/0.0.21
+    identity: UserIdentity
     inputs:
       model_name: animal-classification
       model_type: custom_model
