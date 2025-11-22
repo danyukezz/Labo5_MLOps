@@ -266,21 +266,18 @@ jobs:
       # KUBERNETES - Setup kubectl config
       - name: Kubernetes -- Setup Config
         run: |
-          # Ensure kubeconfig is accessible
-          export KUBECONFIG="${HOME}/.kube/config"
+          # Debug: Show environment
+          echo "HOME: $HOME"
+          echo "USER: $USER"
+          ls -la ~/.kube/config || echo "Kubeconfig not found at ~/.kube/config"
           
           # Verify kubectl is configured
           kubectl cluster-info || echo "⚠️ Kubectl not configured. Please set up kubeconfig."
           kubectl version --client
-        env:
-          KUBECONFIG: ${{ env.KUBECONFIG || '~/.kube/config' }}
       
       # KUBERNETES - Deploy Application
       - name: Kubernetes -- Deploy to Cluster
         run: |
-          # Ensure kubeconfig is accessible
-          export KUBECONFIG="${HOME}/.kube/config"
-          
           # Log version information for traceability
           echo "🚀 Deploying Animals API"
           echo "📦 GitHub SHA: ${{ github.sha }}"
@@ -300,5 +297,3 @@ jobs:
           kubectl get pods
           
           echo "✅ Deployment complete! Model version tagged with SHA: ${{ github.sha }}"
-        env:
-          KUBECONFIG: ${{ env.KUBECONFIG || '~/.kube/config' }}
