@@ -23,7 +23,7 @@ outputs:
     mode: upload
 
 settings:
-  default_compute: azureml:compute-danylo
+  default_compute: azureml:cpu-cluster
 
 jobs:
   data_prep_pandas:
