@@ -1,7 +1,7 @@
 $schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
 name: data_prep_image_resize
 type: command
-version: 0.1.0
+version: 0.1.1
 display_name: Data Preparation - Image Resize
 description: Component to resize images with a Python script
 is_deterministic: true

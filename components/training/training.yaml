@@ -1,5 +1,5 @@
 $schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
-version: 0.1.0
+version: 0.1.1
 type: command
 name: training
 display_name: Training an AI model
