@@ -204,8 +204,8 @@ jobs:
           inlineScript: |
             az extension add --name ml -y
             az configure --defaults group=$GROUP workspace=$WORKSPACE location=$LOCATION
-            VERSION=$(az ml model list -n animal-classification --query "[0].version" -o tsv)
-            az ml model download -n animal-classification -v $VERSION --download-path ./artifact-model
+            VERSION=$(az ml model list -n animals-classifier-model --query "[0].version" -o tsv)
+            az ml model download -n animals-classifier-model -v $VERSION --download-path ./artifact-model
     
       - name: Docker -- Upload API code from Inference
         uses: actions/upload-artifact@v4.3.3
