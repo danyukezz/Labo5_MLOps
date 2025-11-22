@@ -7,7 +7,7 @@ description: Trains an AI model using training and testing data with configurabl
 is_deterministic: false
 
 code: ./code
-environment: azureml:aml-tensorflow:1
+environment: azureml:aml-training-cli:0.1.0
 resources:
   instance_count: 1
 
