@@ -290,6 +290,21 @@ jobs:
           kubectl cluster-info || echo "⚠️ Kubectl not configured. Please set up kubeconfig."
           kubectl version --client
       
+      # KUBERNETES - Create/Update Image Pull Secret
+      - name: Kubernetes -- Update Image Pull Secret
+        run: |
+          # Delete old secret if it exists
+          kubectl delete secret ghcr-secret --ignore-not-found=true
+          
+          # Create new secret with current GitHub token
+          kubectl create secret docker-registry ghcr-secret \
+            --docker-server=ghcr.io \
+            --docker-username=${{ github.repository_owner }} \
+            --docker-password=${{ secrets.GITHUB_TOKEN }} \
+            --docker-email=${{ github.actor }}@users.noreply.github.com
+          
+          echo "✅ Image pull secret updated"
+      
       # KUBERNETES - Deploy Application
       - name: Kubernetes -- Deploy to Cluster
         run: |
