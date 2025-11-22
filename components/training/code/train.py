@@ -2,6 +2,7 @@ import argparse
 import os
 from glob import glob
 import random
+# Force new snapshot upload - v0.1.1
 import tensorflow as tf
 import numpy as np
 

@@ -9,6 +9,7 @@ def main():
     """Main function of the script."""
 
     SEED = 42
+    # Force new snapshot upload - v0.1.1
 
     # input and output arguments
     parser = argparse.ArgumentParser()

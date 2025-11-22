@@ -6,6 +6,7 @@ from PIL import Image
 
 def main():
     """Main function of the script."""
+    # Force new snapshot upload - v0.1.1
 
     # input and output arguments
     parser = argparse.ArgumentParser()
