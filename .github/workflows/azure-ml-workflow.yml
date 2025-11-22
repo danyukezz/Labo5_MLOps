@@ -215,7 +215,7 @@ jobs:
 
   deploy:
     needs: download
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     if: ${{ inputs.skip_deployment != 'true' }}
     steps:
       - name: Checkout code
