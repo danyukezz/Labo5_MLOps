@@ -1,5 +1,5 @@
 $schema: https://azuremlschemas.azureedge.net/latest/computeInstance.schema.json
-name: ci-danylo-dev
+name: compute-danylo
 type: computeinstance
 size: STANDARD_DS2_V2
 
