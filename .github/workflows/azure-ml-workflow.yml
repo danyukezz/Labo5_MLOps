@@ -185,9 +185,11 @@ jobs:
         if: always()
 
   download: 
-    needs: azure-pipeline
+    # Skip azure-pipeline job dependency - just download existing model
+    # needs: azure-pipeline
     runs-on: ubuntu-24.04
-    if: ${{ inputs.skip_training != 'true' || github.event_name == 'push' }}
+    # Always run download job (we have a trained model already)
+    # if: ${{ inputs.skip_training != 'true' || github.event_name == 'push' }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
