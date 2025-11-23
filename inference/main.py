@@ -36,7 +36,22 @@ async def load_model():
     global model
     try:
         logger.info(f"Loading model from {MODEL_PATH}")
-        model = tf.keras.models.load_model(MODEL_PATH)
+        
+        # Check if MODEL_PATH is a directory or file
+        if os.path.isdir(MODEL_PATH):
+            # Look for .keras file in the directory
+            keras_files = [f for f in os.listdir(MODEL_PATH) if f.endswith('.keras')]
+            if keras_files:
+                model_file = os.path.join(MODEL_PATH, keras_files[0])
+                logger.info(f"Found .keras file: {model_file}")
+                model = tf.keras.models.load_model(model_file)
+            else:
+                # Try loading as SavedModel directory
+                model = tf.keras.models.load_model(MODEL_PATH)
+        else:
+            # Direct file path
+            model = tf.keras.models.load_model(MODEL_PATH)
+            
         logger.info("✅ Model loaded successfully")
     except Exception as e:
         logger.error(f"❌ Failed to load model: {str(e)}")
