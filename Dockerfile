@@ -11,8 +11,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the FastAPI application
 COPY inference/main.py .
 
-# Create directory for models
-RUN mkdir -p /models
+# Create directory for models and copy the trained model
+RUN mkdir -p /models/model
+COPY model/ /models/model/
 
 # Expose port
 EXPOSE 8000

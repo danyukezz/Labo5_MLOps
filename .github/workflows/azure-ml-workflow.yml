@@ -185,7 +185,10 @@ jobs:
         if: always()
 
   download: 
-    # Skip azure-pipeline job dependency - just download existing model
+    # OPTIMIZATION: Skip azure-pipeline job dependency for faster deployments
+    # We already have a trained model, so we just download it directly
+    # This saves 15+ minutes per run!
+    # To retrain: manually trigger workflow with skip_training=false
     # needs: azure-pipeline
     runs-on: ubuntu-24.04
     # Always run download job (we have a trained model already)
