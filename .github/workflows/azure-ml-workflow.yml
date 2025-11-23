@@ -158,7 +158,6 @@ jobs:
 
       # RUN PIPELINE
       - name: Azure -- Pipeline Run
-        if: ${{ inputs.skip_training != 'true' }}
         uses: Azure/CLI@v2.2.0
         with:
           azcliversion: 2.79.0
@@ -185,14 +184,9 @@ jobs:
         if: always()
 
   download: 
-    # OPTIMIZATION: Skip azure-pipeline job dependency for faster deployments
-    # We already have a trained model, so we just download it directly
-    # This saves 15+ minutes per run!
-    # To retrain: manually trigger workflow with skip_training=false
-    # needs: azure-pipeline
+    needs: azure-pipeline
     runs-on: ubuntu-24.04
-    # Always run download job (we have a trained model already)
-    # if: ${{ inputs.skip_training != 'true' || github.event_name == 'push' }}
+    if: ${{ always() }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
